@@ -1,11 +1,19 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:grad_project/pages/admin/admin_home.dart';
+import 'package:grad_project/pages/admin/setting.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:grad_project/APIs/fetchData.dart';
+import 'package:velocity_x/velocity_x.dart';
 
 import '../../APIs/models/booking.dart';
+import 'package:http/http.dart' as http;
+
+import '../../common/theme_helper.dart';
+import '../../main.dart';
 
 class appointment_page extends StatefulWidget {
   const appointment_page({Key? key}) : super(key: key);
@@ -16,37 +24,6 @@ class appointment_page extends StatefulWidget {
 class _appointment_pageState extends State<appointment_page> {
   //details of appointment
   String date = "";
-  List<String> user_name = [
-    'Ahmad',
-    'Ali',
-    'Ahmad',
-    'Ali',
-  ];
-  List<List> selected_test = [
-    [
-      'ggga',
-      "Professional ",
-    ],
-    [
-      'gggj',
-      "Professional ",
-    ],
-    [
-      'ggmg',
-      "Professional ",
-    ],
-    [
-      'ggbg',
-      "Professional ",
-    ]
-  ];
-  List<String> selected_date = ["0/0/0", "0/0/0", "0/0/0", "0/0/0"];
-  List<String> selected_time = [
-    "5:10",
-    "5:10",
-    "5:10",
-    "5:10",
-  ];
 
   List<int> check = [0, 0, 0, 0];
   int _page = 0;
@@ -60,8 +37,34 @@ class _appointment_pageState extends State<appointment_page> {
   @override
   void initState() {
     // TODO: implement initState
-    _fetchData.fetchlabBookingList();
+    // _fetchData.fetchlabBookingList();
     super.initState();
+  }
+
+  Future<void> UpdateCheck(int check, String id) async {
+    var body1 = jsonEncode({'check': check});
+
+    print(body1);
+
+    var res = await http.patch(
+        Uri.parse(fetchData.baseURL + "/bookings/updateCheck/" + id),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          "Authorization": "Bearer " + prefs.get("token").toString(),
+        },
+        body: body1);
+
+    print(res.statusCode);
+    if (res.statusCode == 200) {
+      fetchLabBooking();
+      // Navigator.push(
+      //   context,
+      //   MaterialPageRoute(builder: (context) => appointment_page()),
+      // );
+      print("Successfully Update Check");
+    } else {
+      print("faild Update Check");
+    }
   }
 
   Widget build(BuildContext context) {
@@ -114,6 +117,9 @@ class _appointment_pageState extends State<appointment_page> {
               padding: EdgeInsets.only(right: 40, bottom: 5, left: 25),
               child: TextField(
                   controller: dateInputt,
+                  onChanged: (String date) {
+                    // fetchLabBookingByDate(date);
+                  },
                   //editing controller of this TextField
                   decoration: InputDecoration(
                       icon: Icon(
@@ -159,7 +165,75 @@ class _appointment_pageState extends State<appointment_page> {
                     } else {}
                   }),
             ),
-            fetchLabBookingList(),
+            Row(
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(60, 10, 0, 0),
+                  child: Container(
+                    decoration: ThemeHelper().buttonBoxDecoration(context),
+                    child: ElevatedButton(
+                      style: TextButton.styleFrom(
+                          padding: EdgeInsets.only(
+                              left: 10, right: 10, top: 4, bottom: 4),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
+                          backgroundColor: Color.fromARGB(255, 255, 255, 255)),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                        child: Text(
+                          "Search",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      onPressed: () async {},
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(10, 0, 0, 0),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(10, 10, 0, 0),
+                  child: Container(
+                    decoration: ThemeHelper().buttonBoxDecoration(context),
+                    child: ElevatedButton(
+                      style: TextButton.styleFrom(
+                          padding: EdgeInsets.only(
+                              left: 10, right: 10, top: 4, bottom: 4),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
+                          backgroundColor: Color.fromARGB(255, 255, 255, 255)),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                        child: Text(
+                          "Show All",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      onPressed: () async {
+                        dateInputt.clear();
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
+            ),
+            Center(
+              child: dateInputt.text.isNotEmpty
+                  ? fetchLabBookingByDate(dateInputt.text)
+                  : fetchLabBooking(),
+            ),
           ],
         ),
       ),
@@ -167,7 +241,7 @@ class _appointment_pageState extends State<appointment_page> {
   }
 
   Widget appointmentt(BuildContext context, String ownerName, List test,
-      String date, String time, int i) {
+      String date, String time, int i, int check, String id, String servLoc) {
     return Padding(
       padding: EdgeInsets.only(
           left: MediaQuery.of(context).size.width * 0.07,
@@ -193,7 +267,6 @@ class _appointment_pageState extends State<appointment_page> {
           ],
         ),
         child: SingleChildScrollView(
-          scrollDirection: Axis.vertical,
           child: Stack(
             children: [
               Padding(
@@ -258,6 +331,16 @@ class _appointment_pageState extends State<appointment_page> {
               Padding(
                 padding: EdgeInsets.only(top: 70, left: 25),
                 child: Text(
+                  "in" + " " + servLoc,
+                  style: TextStyle(
+                      color: Color.fromARGB(255, 0, 0, 0),
+                      fontSize: MediaQuery.of(context).size.width * 0.045,
+                      fontWeight: FontWeight.w700),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: 100, left: 25),
+                child: Text(
                   "Selected Test:",
                   style: TextStyle(
                       color: Color.fromARGB(255, 9, 78, 153),
@@ -266,25 +349,30 @@ class _appointment_pageState extends State<appointment_page> {
                 ),
               ),
               for (int k = 0; k < test.length; k++)
-                text_wed(context, test[i][k], k),
+                text_wed(context, test[k], k),
               Padding(
                 padding: EdgeInsets.only(left: 230, top: 100),
                 child: IconButton(
                   icon: Icon(
                     Icons.check_circle_rounded,
                     size: 40,
-                    color: (check[i] == 1)
+                    color: (check == 1)
                         ? Color.fromARGB(255, 9, 78, 153)
                         : Colors.grey,
                   ),
                   onPressed: () {
                     setState(() {
-                      if (check[i] == 0) {
-                        check[i] = 1;
-                        print(check[i]);
-                      } else if (check[i] == 1) {
-                        check[i] = 0;
-                        print(check[i]);
+                      if (check == 0) {
+                        check = 1;
+
+                        UpdateCheck(check, id);
+
+                        print(check);
+                      } else if (check == 1) {
+                        check = 0;
+                        UpdateCheck(check, id);
+
+                        print(check);
                       }
                     });
                   },
@@ -299,7 +387,7 @@ class _appointment_pageState extends State<appointment_page> {
 
   Widget text_wed(BuildContext context, String s, int i) {
     if (i != 0) ttop = ttop + 25;
-    if (i == 0) ttop = 100;
+    if (i == 0) ttop = 120;
     return Padding(
       padding: EdgeInsets.only(left: 30, top: ttop),
       child: SingleChildScrollView(
@@ -316,27 +404,79 @@ class _appointment_pageState extends State<appointment_page> {
     );
   }
 
-  Widget fetchLabBookingList() {
+// Fetch all bookings and make card for each booking
+  Widget fetchLabBooking() {
     return FutureBuilder(
       future: _fetchData.fetchlabBookingList(),
       builder: (context, snapshot) {
-        var booking = snapshot.data as List<bookingModel>;
-        print(booking[0].ownerName);
+        var bookings = snapshot.data as List<bookingModel>;
         return snapshot.data == null
             ? Text("Loading...")
-            : ListView.builder(
-                // shrinkWrap: true,
-                scrollDirection: Axis.horizontal,
-                itemCount: booking == null ? 0 : booking.length,
-                itemBuilder: (context, index) {
-                  return appointmentt(
-                      context,
-                      booking[index].ownerName,
-                      booking[index].test,
-                      booking[index].date,
-                      booking[index].time,
-                      booking.length);
-                });
+            : SizedBox(
+                width: 1000,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    ListView.builder(
+                      shrinkWrap: true,
+                      scrollDirection: Axis.vertical,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: bookings.length,
+                      itemBuilder: (context, index) {
+                        print(index);
+                        return appointmentt(
+                            context,
+                            bookings[index].ownerName,
+                            bookings[index].test,
+                            bookings[index].date,
+                            bookings[index].time,
+                            index,
+                            int.parse(bookings[index].check),
+                            bookings[index].id,
+                            bookings[index].serviceLoc);
+                      },
+                    ),
+                  ],
+                ),
+              );
+      },
+    );
+  }
+
+  Widget fetchLabBookingByDate(String date) {
+    return FutureBuilder(
+      future: _fetchData.fetchlabBookingByDate(date),
+      builder: (context, snapshot) {
+        var bookings = snapshot.data as List<bookingModel>;
+        return snapshot.data == null
+            ? Text("Loading...")
+            : SizedBox(
+                width: 500,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    ListView.builder(
+                      shrinkWrap: true,
+                      scrollDirection: Axis.vertical,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: bookings.length,
+                      itemBuilder: (context, index) {
+                        print(index);
+                        return appointmentt(
+                            context,
+                            bookings[index].ownerName,
+                            bookings[index].test,
+                            bookings[index].date,
+                            bookings[index].time,
+                            index,
+                            int.parse(bookings[index].check),
+                            bookings[index].id,
+                            bookings[index].serviceLoc);
+                      },
+                    ),
+                  ],
+                ),
+              );
       },
     );
   }

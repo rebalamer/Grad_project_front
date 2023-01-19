@@ -44,6 +44,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
   late TextEditingController phoneControler;
   late TextEditingController passwordControler;
   late TextEditingController confirmPasswordControler;
+  late TextEditingController identityNumberControler;
 
   @override
   void initState() {
@@ -55,53 +56,54 @@ class _RegistrationPageState extends State<RegistrationPage> {
     phoneControler = TextEditingController();
     passwordControler = TextEditingController();
     confirmPasswordControler = TextEditingController();
+    identityNumberControler = TextEditingController();
   }
 
   Future<void> SignUp() async {
-    if (fullNameControler.text.trim().isEmpty ||
-        usernameControler.text.trim().isEmpty ||
-        ageControler.text.trim().isEmpty ||
-        passwordControler.text.trim().isEmpty ||
-        confirmPasswordControler.text.trim().isEmpty ||
-        phoneControler.text.trim().isEmpty) {
-      print("Empty fields");
-      return;
+    if (_formKey.currentState!.validate()) {
+      if (fullNameControler.text.trim().isEmpty ||
+          usernameControler.text.trim().isEmpty ||
+          ageControler.text.trim().isEmpty ||
+          passwordControler.text.trim().isEmpty ||
+          confirmPasswordControler.text.trim().isEmpty ||
+          phoneControler.text.trim().isEmpty ||
+          identityNumberControler.text.trim().isEmpty) {
+        print("Empty fields");
+        return;
+      }
+      if (passwordControler.text != confirmPasswordControler.text) {
+        print("Password miss match");
+        return;
+      }
+      var body1 = jsonEncode({
+        'username': usernameControler.text,
+        'name': fullNameControler.text,
+        'age': ageControler.text,
+        'password': passwordControler.text,
+        'phoneNumber': phoneControler.text,
+        'identityNumber': identityNumberControler.text,
+      });
+
+      print(body1);
+
+      var res = await http.post(Uri.parse(fetchData.baseURL + "/users"),
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: body1);
+      print(res.statusCode);
+      if (res.statusCode == 201) {
+        print("Successfully signed up");
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+                builder: (context) => SplashScreen(
+                      title: '',
+                    )),
+            (Route<dynamic> route) => false);
+      } else {
+        print("faild to sign up");
+      }
     }
-
-    var body1 = jsonEncode({
-      'username': usernameControler.text,
-      'name': fullNameControler.text,
-      'age': ageControler.text,
-      'password': passwordControler.text,
-      'phoneNumber': phoneControler.text,
-    });
-
-    print(body1);
-
-    var res = await http.post(Uri.parse(fetchData.baseURL + "/users"),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: body1);
-    print(res.statusCode);
-    if (res.statusCode == 201) {
-      print("Successfully signed up");
-    } else {
-      print("faild to sign up");
-    }
-    _clearValues();
-    // Navigator.push(
-    //     context,
-    //     MaterialPageRoute(builder: (context) => loginPageClass()),
-    //   );
-  }
-
-  _clearValues() {
-    fullNameControler.text = "";
-    usernameControler.text = "";
-    passwordControler.text = "";
-    confirmPasswordControler.text = "";
-    ageControler.text = "";
   }
 
   @override
@@ -149,8 +151,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         Container(
                           child: TextFormField(
                             controller: fullNameControler,
+                            validator: (val) {
+                              if (val!.isEmpty) {
+                                return "Please enter a name";
+                              }
+                              return null;
+                            },
                             decoration: ThemeHelper().textInputDecoration(
-                                'Full Name', 'Enter your full name'),
+                                'Full name', 'Enter your full name'),
                           ),
                           decoration: ThemeHelper().inputBoxDecorationShaddow(),
                         ),
@@ -160,8 +168,34 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         Container(
                           child: TextFormField(
                             controller: usernameControler,
+                            validator: (val) {
+                              if (val!.isEmpty) {
+                                return "Please enter a username";
+                              }
+                              return null;
+                            },
                             decoration: ThemeHelper().textInputDecoration(
                                 'Username', 'Enter your uesrname'),
+                          ),
+                          decoration: ThemeHelper().inputBoxDecorationShaddow(),
+                        ),
+                        SizedBox(height: 20.0),
+                        Container(
+                          child: TextFormField(
+                            controller: identityNumberControler,
+                            validator: (val) {
+                              if (!(val!.isEmpty) &&
+                                  !RegExp(r"^(\d+)*$").hasMatch(val)) {
+                                return "Enter a valid identity number";
+                              } else if (identityNumberControler.text.length !=
+                                  9) {
+                                return "Enter a valid identity number";
+                              }
+                              return null;
+                            },
+                            decoration: ThemeHelper().textInputDecoration(
+                                'Identity number',
+                                'Enter your identity number'),
                           ),
                           decoration: ThemeHelper().inputBoxDecorationShaddow(),
                         ),
@@ -172,6 +206,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             decoration: ThemeHelper()
                                 .textInputDecoration("Age", "Enter your age"),
                             keyboardType: TextInputType.number,
+                            validator: (val) {
+                              if (val!.isEmpty) {
+                                return "Please enter your age";
+                              } else if (ageControler.text.length > 2) {
+                                return "Please enter a valid age";
+                              }
+                              return null;
+                            },
                           ),
                           decoration: ThemeHelper().inputBoxDecorationShaddow(),
                         ),
@@ -180,12 +222,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           child: TextFormField(
                             controller: phoneControler,
                             decoration: ThemeHelper().textInputDecoration(
-                                "Mobile Number", "Enter your mobile number"),
+                                "Mobile number", "Enter your mobile number"),
                             keyboardType: TextInputType.phone,
                             validator: (val) {
                               if (!(val!.isEmpty) &&
                                   !RegExp(r"^(\d+)*$").hasMatch(val)) {
                                 return "Enter a valid phone number";
+                              } else if (val.isEmpty) {
+                                return "Enter your number";
                               }
                               return null;
                             },
@@ -202,6 +246,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             validator: (val) {
                               if (val!.isEmpty) {
                                 return "Please enter your password";
+                              } else if (confirmPasswordControler.text !=
+                                  passwordControler.text) {
+                                return "Check password must be the same";
+                              } else if (confirmPasswordControler.text.length <
+                                  8) {
+                                return "your password is too short";
                               }
                               return null;
                             },
@@ -219,8 +269,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
                                 "Confirm Password*",
                                 "Enter your password agin"),
                             validator: (val) {
-                              if (val!.isEmpty) {
-                                return "Please enter your password agin";
+                              if (confirmPasswordControler.text !=
+                                  passwordControler.text) {
+                                return "Check password must be the same";
+                              } else if (confirmPasswordControler.text.length <
+                                  8) {
+                                return "your password is too short";
                               }
                               return null;
                             },
@@ -290,14 +344,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             ),
                             onPressed: () {
                               SignUp();
-                              // if (_formKey.currentState!.validate()) {
-                              Navigator.of(context).pushAndRemoveUntil(
-                                  MaterialPageRoute(
-                                      builder: (context) => SplashScreen(
-                                            title: '',
-                                          )),
-                                  (Route<dynamic> route) => false);
-                              //   }
                             },
                           ),
                         ),

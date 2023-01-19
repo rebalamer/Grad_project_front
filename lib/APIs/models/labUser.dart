@@ -1,3 +1,8 @@
+import 'dart:typed_data';
+
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
+
 class labUserModel {
   late String location;
   late String username;
@@ -8,6 +13,7 @@ class labUserModel {
   late String phoneNumber;
   late String id;
   late List insurance;
+  late BinaryCodec avatar;
 
   labUserModel(this.location, this.username, this.password, this.phoneNumber,
       this.name, this.id, this.bTime, this.eTime, this.insurance);
@@ -18,7 +24,7 @@ class labUserModel {
     this.password = map['password'];
     this.phoneNumber = map['phoneNumber'];
     this.name = map['name'];
-    this.id = map['id'];
+    this.id = map['_id'];
     this.bTime = map['bTime'];
     this.eTime = map['eTime'];
     this.insurance = map['insurance'];

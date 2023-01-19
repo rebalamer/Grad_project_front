@@ -18,7 +18,7 @@ class userModel {
     this.password = map['password'];
     this.phoneNumber = map['phoneNumber'];
     this.name = map['name'];
-    this.id = map['id'];
+    this.id = map['_id'];
     this.email = map['email'];
   }
 }

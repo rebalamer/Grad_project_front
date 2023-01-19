@@ -2,13 +2,13 @@ import 'dart:io';
 
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
-import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import 'package:grad_project/APIs/fetchData.dart';
 import 'package:grad_project/pages/admin/admin_home.dart';
-import 'package:intl/intl.dart';
-import 'package:flutter/cupertino.dart';
 import '../../common/theme_helper.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:grad_project/APIs/fetchData.dart';
+
+import '../../main.dart';
 
 class result_page extends StatefulWidget {
   const result_page({Key? key}) : super(key: key);
@@ -19,8 +19,10 @@ class result_page extends StatefulWidget {
 class _result_pageState extends State<result_page> {
   File? file;
   var fileName = '';
+  var fileB;
 
   var path = '';
+  TextEditingController UserID = TextEditingController();
 
   void pick() async {
     try {
@@ -31,9 +33,16 @@ class _result_pageState extends State<result_page> {
           var fileBytes = resultt.files.first.bytes;
           fileName = resultt.files.first.name;
           path = resultt.files.first.path!;
+          print("File bytes");
+          print(fileBytes);
+          fileB = fileBytes;
         }
+
         file = File(path);
+        print("File");
         print(file);
+        print("fileName");
+        print(fileName);
       });
 
       // }
@@ -42,23 +51,45 @@ class _result_pageState extends State<result_page> {
     }
   }
 
-  List<String> Patient = [
-    'Ahmad',
-    'Ali',
-    'Ahmad',
-    'Ali',
-  ];
   String selected_patient = '';
-  TextEditingController searchControler = TextEditingController();
-  double h = 150;
-  fetchData _fetchData = fetchData();
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    _fetchData.fetchAllUsersList();
+  Future<void> uploadFile() async {
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse(
+          fetchData.baseURL + "/report/LabSend/" + UserID.text + "/report"),
+    );
+    request.headers
+        .addAll({"Authorization": "Bearer " + prefs.get("token").toString()});
+    request.files.add(
+        await http.MultipartFile.fromPath('report', path, filename: fileName));
 
-    super.initState();
+    var res = await request.send();
+
+    if (res.statusCode == 200) {
+      print("Successfully upload ");
+      Navigator.pushReplacement(context,
+          MaterialPageRoute(builder: (context) => const admin_homepage()));
+    } else {
+      print("faild upload");
+    }
+
+    // var res = await http.post(
+    //   Uri.parse(
+    //       fetchData.baseURL + "/report/LabSend/" + UserID.text + "/report"),
+    //   headers: {
+    //     'Content-Type': 'application/pdf',
+    //     "Authorization": "Bearer " + prefs.get("token").toString(),
+    //   },
+    // );
+    // print(res.statusCode);
+    // if (res.statusCode == 201) {
+    //   print("Successfully booking");
+    //   Navigator.pushReplacement(context,
+    //       MaterialPageRoute(builder: (context) => const admin_homepage()));
+    // } else {
+    //   print("faild booking");
+    // }
   }
 
   Widget build(BuildContext context) {
@@ -117,7 +148,7 @@ class _result_pageState extends State<result_page> {
                     bottom: MediaQuery.of(context).size.width * 0.092,
                     top: 50),
                 child: Text(
-                  'Select the patient you want to send the results to',
+                  'Enter patient identity number you want to send the results to',
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
                     fontSize: MediaQuery.of(context).size.width * 0.048,
@@ -126,25 +157,18 @@ class _result_pageState extends State<result_page> {
                 ),
               ),
               Container(
-                width: 310,
-                padding: EdgeInsets.fromLTRB(25, 120, 5, 0),
-                child: DropdownSearch<String>(
-                  mode: Mode.MENU,
-                  maxHeight: 300,
-                  showSearchBox: true,
-                  items: Patient,
-                  showSelectedItems: false,
-                  selectedItem: '',
-                  //save selected list
-                  onChanged: (value) {
-                    selected_patient = value!;
-                  },
+                padding: EdgeInsets.fromLTRB(25, 180, 25, 0),
+                child: TextField(
+                  controller: UserID,
+                  decoration: InputDecoration(
+                      labelText: "Enter User ID" //label text of field
+                      ),
                 ),
               ),
               Row(
                 children: [
                   Padding(
-                    padding: EdgeInsets.fromLTRB(30, 180, 0, 0),
+                    padding: EdgeInsets.fromLTRB(30, 260, 0, 0),
                     child: Text(
                       'Pick the result you wanna send ',
                       style: TextStyle(
@@ -155,7 +179,7 @@ class _result_pageState extends State<result_page> {
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(0, 180, 35, 0),
+                    padding: EdgeInsets.fromLTRB(0, 260, 35, 0),
                     child: IconButton(
                       icon: Icon(
                         Icons.file_upload_outlined,
@@ -170,7 +194,7 @@ class _result_pageState extends State<result_page> {
                 ],
               ),
               Padding(
-                padding: EdgeInsets.fromLTRB(115, 230, 0, 0),
+                padding: EdgeInsets.fromLTRB(115, 320, 0, 0),
                 child: Text(
                   fileName,
                   style: TextStyle(
@@ -181,7 +205,7 @@ class _result_pageState extends State<result_page> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.fromLTRB(100, 320, 0, 0),
+                padding: EdgeInsets.fromLTRB(100, 370, 0, 0),
                 child: Container(
                   decoration: ThemeHelper().buttonBoxDecoration(context),
                   child: ElevatedButton(
@@ -197,7 +221,9 @@ class _result_pageState extends State<result_page> {
                         ),
                       ),
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      uploadFile();
+                    },
                   ),
                 ),
               ),

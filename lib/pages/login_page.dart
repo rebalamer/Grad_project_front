@@ -21,7 +21,8 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   double _headerHeight = 200;
-  Key _formKey = GlobalKey<FormState>();
+
+  final _formKey = GlobalKey<FormState>();
 
   late TextEditingController passwordController;
   late TextEditingController usernameController;
@@ -35,11 +36,11 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> LogIn() async {
-    if (usernameController.text.trim().isEmpty ||
-        passwordController.text.trim().isEmpty) {
-      print("Empty fields");
-      return;
-    }
+    // if (usernameController.text.trim().isEmpty ||
+    //     passwordController.text.trim().isEmpty) {
+    //   print("Empty fields");
+    //   return;
+    // }
 
     var body1 = jsonEncode({
       'username': usernameController.text,
@@ -59,10 +60,14 @@ class _LoginPageState extends State<LoginPage> {
       var body = jsonDecode(res.body);
       print(body['token']);
       sharedPrefs.saveToken(body['token']);
-
-      Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => HomePage()),
-          (Route<dynamic> route) => false);
+      if (body['username'] == "admin") {
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => Lab_Registration()),
+            (Route<dynamic> route) => false);
+      } else
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => HomePage()),
+            (Route<dynamic> route) => false);
     } else {
       var res1 =
           await http.post(Uri.parse(fetchData.baseURL + "/labUsers/login"),
@@ -76,13 +81,15 @@ class _LoginPageState extends State<LoginPage> {
 
         var body = jsonDecode(res1.body);
         print(body['token']);
+
         sharedPrefs.saveToken(body['token']);
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => admin_homepage()),
             (Route<dynamic> route) => false);
       } else {
         print("faild to login");
-        _clearValues();
+        if (_formKey.currentState!.validate()) {}
+        // _clearValues();
       }
     }
 
@@ -92,10 +99,10 @@ class _LoginPageState extends State<LoginPage> {
     //   );
   }
 
-  _clearValues() {
-    usernameController.text = "";
-    passwordController.text = "";
-  }
+  // _clearValues() {
+  //   usernameController.text = "";
+  //   passwordController.text = "";
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -144,13 +151,14 @@ class _LoginPageState extends State<LoginPage> {
                                   controller: usernameController,
                                   decoration: ThemeHelper().textInputDecoration(
                                       "Username", "Enter your Username"),
-                                  keyboardType: TextInputType.phone,
                                   validator: (val) {
-                                    if (!(val!.isEmpty) &&
-                                        !RegExp(r"^(\d+)*$").hasMatch(val)) {
-                                      return "Enter a valid phone number";
+                                    if ((val!.isEmpty)) {
+                                      return " Please enter your username ";
+                                    } else if (passwordController
+                                        .text.isEmpty) {
+                                      return null;
                                     }
-                                    return null;
+                                    return "username or password not correct";
                                   },
                                 ),
                                 decoration:
@@ -158,9 +166,18 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               SizedBox(height: 30.0),
                               Container(
-                                child: TextField(
+                                child: TextFormField(
                                   controller: passwordController,
                                   obscureText: true,
+                                  validator: (val) {
+                                    if ((val!.isEmpty)) {
+                                      return " Please enter a password ";
+                                    } else if (usernameController
+                                        .text.isEmpty) {
+                                      return null;
+                                    }
+                                    return "username or password not correct";
+                                  },
                                   decoration: ThemeHelper().textInputDecoration(
                                       'Password', 'Enter your password'),
                                 ),

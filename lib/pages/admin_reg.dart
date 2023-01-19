@@ -24,23 +24,12 @@ class _Lab_RegistrationState extends State<Lab_Registration> {
   final _formKey = GlobalKey<FormState>();
 
   List<String> Insurance = [
-    'Afghanistan',
-    'Turkey',
-    'Germany',
-    'France',
-    'Italy',
-    'Spain',
-    'United Kingdom',
-    'United States',
-    'Canada',
-    'Australia',
-    'New Zealand',
-    'India',
-    'Indonesia',
-    'Bangladesh',
-    'Sri Lanka',
+    'Nat Health (الوطنية)',
+    'Globe Med (العالمية)',
+    'Smart Health (ترست)',
+    'Tamkeen (تمكين)',
+    'Med Service (المشرق)',
   ];
-
   List<String> selected_Insurance = [];
 
   String Beg_time = "";
@@ -73,63 +62,38 @@ class _Lab_RegistrationState extends State<Lab_Registration> {
   }
 
   Future<void> AddLabUser() async {
-    print("iam here");
-    if (LabNameControler.text.trim().isEmpty ||
-        usernameControler.text.trim().isEmpty ||
-        LocationControler.text.trim().isEmpty ||
-        phoneControler.text.trim().isEmpty ||
-        passwordControler.text.trim().isEmpty ||
-        bTime.text.trim().isEmpty ||
-        eTime.text.trim().isEmpty ||
-        selected_Insurance.isEmpty) {
-      print("Empty fields");
-      return;
+    if (_formKey.currentState!.validate()) {
+      print("iam here");
+
+      var body1 = jsonEncode({
+        "username": usernameControler.text,
+        "password": passwordControler.text,
+        "bTime": bTime.text,
+        "eTime": eTime.text,
+        "phoneNumber": phoneControler.text,
+        "name": LabNameControler.text,
+        "location": LocationControler.text,
+        "insurance": selected_Insurance,
+      });
+
+      print(body1);
+
+      var res = await http.post(Uri.parse(fetchData.baseURL + "/labUsers"),
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            // "Authorization": "Bearer ",
+          },
+          body: body1);
+      print(res.statusCode);
+      if (res.statusCode == 201) {
+        print("Successfully booking");
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (context) => Lab_Registration()));
+      } else {
+        print("faild booking");
+      }
     }
-
-    var body1 = jsonEncode({
-      "username": usernameControler.text,
-      "password": passwordControler.text,
-      "bTime": bTime.text,
-      "eTime": eTime.text,
-      "phoneNumber": phoneControler.text,
-      "name": LabNameControler.text,
-      "location": LocationControler.text,
-      "insurance": selected_Insurance,
-    });
-
-    print(body1);
-
-    var res = await http.post(Uri.parse(fetchData.baseURL + "/labUsers"),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          // "Authorization": "Bearer ",
-        },
-        body: body1);
-    print(res.statusCode);
-    if (res.statusCode == 201) {
-      print("Successfully booking");
-      Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => Lab_Registration()));
-    } else {
-      print("faild booking");
-    }
-    // _clearValues();
-    // Navigator.push(
-    //     context,
-    //     MaterialPageRoute(builder: (context) => loginPageClass()),
-    //   );
   }
-
-  // _clearValues() {
-  //   LabNameControler.text = "";
-  //   usernameControler.text = "";
-  //   LocationControler.text = "";
-  //   phoneControler.text = "";
-  //   passwordControler.text = "";
-  //   bTime.text = "";
-  //   eTime.text = "";
-  //   selected_Insurance = [];
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -209,6 +173,12 @@ class _Lab_RegistrationState extends State<Lab_Registration> {
                         Container(
                           child: TextFormField(
                             controller: LabNameControler,
+                            validator: (val) {
+                              if (val!.isEmpty) {
+                                return "Please enter a name";
+                              }
+                              return null;
+                            },
                             decoration: ThemeHelper()
                                 .textInputDecoration('Lab Name', ''),
                           ),
@@ -220,6 +190,12 @@ class _Lab_RegistrationState extends State<Lab_Registration> {
                         Container(
                           child: TextFormField(
                             controller: usernameControler,
+                            validator: (val) {
+                              if (val!.isEmpty) {
+                                return "Please enter a username";
+                              }
+                              return null;
+                            },
                             decoration: ThemeHelper()
                                 .textInputDecoration('User Name', ''),
                           ),
@@ -229,6 +205,12 @@ class _Lab_RegistrationState extends State<Lab_Registration> {
                         Container(
                           child: TextFormField(
                             controller: LocationControler,
+                            validator: (val) {
+                              if (val!.isEmpty) {
+                                return "Please enter a location";
+                              }
+                              return null;
+                            },
                             decoration: ThemeHelper()
                                 .textInputDecoration("Location", ""),
                           ),
@@ -245,6 +227,8 @@ class _Lab_RegistrationState extends State<Lab_Registration> {
                               if (!(val!.isEmpty) &&
                                   !RegExp(r"^(\d+)*$").hasMatch(val)) {
                                 return "Enter a valid phone number";
+                              } else if (val.isEmpty) {
+                                return "Enter your number";
                               }
                               return null;
                             },
@@ -261,6 +245,12 @@ class _Lab_RegistrationState extends State<Lab_Registration> {
                             validator: (val) {
                               if (val!.isEmpty) {
                                 return "Please enter your password";
+                              } else if (confirmPasswordControler.text !=
+                                  passwordControler.text) {
+                                return "Check password must be the same";
+                              } else if (confirmPasswordControler.text.length <
+                                  8) {
+                                return "your password is too short";
                               }
                               return null;
                             },
@@ -277,7 +267,10 @@ class _Lab_RegistrationState extends State<Lab_Registration> {
                             validator: (val) {
                               if (confirmPasswordControler.text !=
                                   passwordControler.text) {
-                                return "Please check your password";
+                                return "Check password must be the same";
+                              } else if (confirmPasswordControler.text.length <
+                                  8) {
+                                return "your password is too short";
                               }
                               return null;
                             },
@@ -299,6 +292,7 @@ class _Lab_RegistrationState extends State<Lab_Registration> {
                               readOnly: true,
                               onTap: () async {
                                 await bottomSheet(context, timePicker1());
+
                                 setState(() {
                                   bTime.text = Beg_time;
                                 });
@@ -330,7 +324,12 @@ class _Lab_RegistrationState extends State<Lab_Registration> {
                             mode: Mode.MENU,
                             maxHeight: 400,
                             showSearchBox: true,
-
+                            validator: (val) {
+                              if (val!.isEmpty) {
+                                return "Please Choose insurance";
+                              }
+                              return null;
+                            },
                             dropdownSearchDecoration: InputDecoration(
                               fillColor: Colors.white,
                               labelText: " Insurance",
@@ -365,14 +364,6 @@ class _Lab_RegistrationState extends State<Lab_Registration> {
                             ),
                             onPressed: () {
                               AddLabUser();
-                              // if (_formKey.currentState!.validate()) {
-                              //   Navigator.of(context).pushAndRemoveUntil(
-                              //       MaterialPageRoute(
-                              //           builder: (context) => SplashScreen(
-                              //                 title: '',
-                              //               )),
-                              //       (Route<dynamic> route) => false);
-                              // }
                             },
                           ),
                         ),

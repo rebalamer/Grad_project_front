@@ -81,8 +81,8 @@ class _edit_pageState extends State<edit_page> {
     // LocationControler.text = "Nablus Rafidea";
     // phoneControler.text = "0595585652";
     //جوا الفايل لازم يكون جواه الباث تاعت الصورة
-    /* _image = File(
- '/data/user/0/com.example.grad_project/cache/image_cropper_1670610381950.jpg');*/
+    // _image = File(
+    //     '/data/user/0/com.example.grad_project/cache/image_cropper_1670610381950.jpg');
     // selected_Insurance = [
     //   'Bangladesh',
     //   'Sri Lanka',
@@ -126,30 +126,27 @@ class _edit_pageState extends State<edit_page> {
         body: body1);
     print(res.statusCode);
     if (res.statusCode == 200) {
-      print("Successfully booking");
-      Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => Settings_Screen()),
-          (Route<dynamic> route) => false);
+      print("Successfully Update");
+      var res1 = await http
+          .post(Uri.parse(fetchData.baseURL + "/labUsers/me/avatar"), headers: {
+        "Content-Type": "multipart/form-data",
+        "Authorization": "Bearer " + prefs.get("token").toString(),
+      }, body: {
+        "avatar": _image
+      });
+      print(res.statusCode);
+      if (res.statusCode == 200) {
+        print("Successfully Update avatar");
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => Settings_Screen()),
+            (Route<dynamic> route) => false);
+      } else {
+        print("faild Update avatar");
+      }
     } else {
-      print("faild booking");
+      print("faild Update");
     }
-    // _clearValues();
-    // Navigator.push(
-    //     context,
-    //     MaterialPageRoute(builder: (context) => loginPageClass()),
-    //   );
   }
-
-  // _clearValues() {
-  //   LabNameControler.text = "";
-  //   usernameControler.text = "";
-  //   LocationControler.text = "";
-  //   phoneControler.text = "";
-  //   passwordControler.text = "";
-  //   bTime.text = "";
-  //   eTime.text = "";
-  //   selected_Insurance = [];
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -492,6 +489,7 @@ class _edit_pageState extends State<edit_page> {
       File? img = File(image.path);
       print("helloooooo");
       img = await _cropImage(imageFile: img);
+
       setState(() {
         _image = img;
         //  Navigator.of(context).pop();

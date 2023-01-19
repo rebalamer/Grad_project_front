@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 class bookingModel {
   late List test;
   late String date;
@@ -10,9 +8,10 @@ class bookingModel {
   late String owner;
   late String ownerL;
   late String id;
+  late String check;
 
   bookingModel(this.ownerL, this.ownerName, this.test, this.date, this.time,
-      this.serviceLoc, this.owner, this.id, this.ownerLabName);
+      this.serviceLoc, this.owner, this.id, this.ownerLabName, this.check);
 
   bookingModel.fromJson(Map<String, dynamic> map) {
     this.ownerName = map['ownerName'];
@@ -20,8 +19,10 @@ class bookingModel {
     this.test = map['test'];
     this.date = map['date'];
     this.serviceLoc = map['serviceLoc'];
-    this.id = map['id'];
+    this.id = map['_id'];
     this.owner = map['owner'];
     this.ownerL = map['ownerL'];
+    this.time = map["time"];
+    this.check = map["check"];
   }
 }
